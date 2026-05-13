@@ -3,6 +3,8 @@ package calcultableau;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -95,4 +97,31 @@ public class CalculTabEdgeCasesTest {
         assertThat(mediane).isEqualTo(12.5);
     }
 
+
+    // ---- Validation notes négatives (hors -1 sentinel) ----
+
+    @ParameterizedTest(name = "Note negative invalide : {0}")
+    @DisplayName("ajouterNote refuse toute note negative (le -1 est reserve a l'arret du programme)")
+    @ValueSource(ints = { -2, -5, -10, -100 })
+    void ajouterNote_throwsException_whenNoteIsNegative(int noteNegative) {
+        // Given
+        CalculTab calculTab = new CalculTab();
+
+        // When + Then
+        assertThatThrownBy(() -> calculTab.ajouterNote(noteNegative))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("invalide");
+    }
+
+    @Test
+    @DisplayName("ajouterNote refuse -1 : signal d'arret intercepte dans Principale avant d'atteindre CalculTab")
+    void ajouterNote_throwsException_whenNoteIsMinusOne() {
+        // Given
+        CalculTab calculTab = new CalculTab();
+
+        // When + Then
+        assertThatThrownBy(() -> calculTab.ajouterNote(-1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("invalide");
+    }
 }

@@ -25,6 +25,8 @@ public class CalculTab {
      * @param note valeur entiere de la note
      */
     public void ajouterNote(int note) {
+        if (note < 0 || note > 20)
+            throw new IllegalArgumentException("Note invalide : " + note + " (doit etre entre 0 et 20)");
         notes.add(note);
     }
 
