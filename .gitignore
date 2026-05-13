@@ -4,3 +4,11 @@ target/
 .idea/
 .vscode/
 *.DS_Store
+# Compte rendu (géré séparément)
+compte-rendu.tex
+compte-rendu.pdf
+*.aux
+*.log
+*.toc
+*.out
+screenshots/
