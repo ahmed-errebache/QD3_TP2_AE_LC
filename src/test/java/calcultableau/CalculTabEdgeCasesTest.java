@@ -100,8 +100,8 @@ public class CalculTabEdgeCasesTest {
 
     // ---- Validation notes négatives (hors -1 sentinel) ----
 
-    @ParameterizedTest(name = "Note negative invalide : {0}")
-    @DisplayName("ajouterNote refuse toute note negative (le -1 est reserve a l'arret du programme)")
+    @ParameterizedTest(name = "Note invalide : {0}")
+    @DisplayName("ajouterNote refuse toute note negative : note invalide")
     @ValueSource(ints = { -2, -5, -10, -100 })
     void ajouterNote_throwsException_whenNoteIsNegative(int noteNegative) {
         // Given
@@ -114,7 +114,7 @@ public class CalculTabEdgeCasesTest {
     }
 
     @Test
-    @DisplayName("ajouterNote refuse -1 : signal d'arret intercepte dans Principale avant d'atteindre CalculTab")
+    @DisplayName("ajouterNote refuse -1 : note invalide")
     void ajouterNote_throwsException_whenNoteIsMinusOne() {
         // Given
         CalculTab calculTab = new CalculTab();
