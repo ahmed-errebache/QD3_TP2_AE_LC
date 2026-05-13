@@ -46,8 +46,10 @@ public class Principale {
                     calcul.ajouterNote(note);
                 }
             } catch (InputMismatchException e) {
-                System.out.println("Valeur invalide, entrez un entier.");
-                sc.next(); // vide le token invalide
+                System.out.println("Note invalide, veuillez reessayer.");
+                sc.next();
+            } catch (IllegalArgumentException e) {
+                System.out.println("Note invalide, veuillez reessayer.");
             }
         }
 
