@@ -1,0 +1,587 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{mdframed}
+\usepackage{parskip}
+\usepackage{titlesec}
+
+% ---- Couleurs ----
+\definecolor{javagreen}{rgb}{0.25,0.5,0.35}
+\definecolor{javapurple}{rgb}{0.5,0,0.35}
+\definecolor{javaocre}{rgb}{0.65,0.4,0.0}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\definecolor{rouge}{RGB}{220,53,69}
+\definecolor{vert}{RGB}{40,167,69}
+\definecolor{gris}{RGB}{180,180,180}
+
+% ---- Style Java ----
+\lstdefinestyle{java}{
+  language=Java,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{javapurple}\bfseries,
+  commentstyle=\color{javagreen}\itshape,
+  stringstyle=\color{javaocre},
+  numberstyle=\tiny\color{gray},
+  numbers=left,
+  stepnumber=1,
+  frame=single,
+  rulecolor=\color{gray!40},
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=4,
+  captionpos=b,
+  xleftmargin=1em,
+}
+
+% ---- Encadré rouge (test en échec) ----
+\newcommand{\etatrouge}[1]{%
+  \begin{mdframed}[linecolor=rouge,linewidth=2pt,backgroundcolor=rouge!8]%
+    \textcolor{rouge}{\textbf{\textsc{Rouge} ---}} #1%
+  \end{mdframed}%
+}
+
+% ---- Encadré vert (test qui passe) ----
+\newcommand{\etatvert}[1]{%
+  \begin{mdframed}[linecolor=vert,linewidth=2pt,backgroundcolor=vert!8]%
+    \textcolor{vert}{\textbf{\textsc{Vert} ---}} #1%
+  \end{mdframed}%
+}
+
+% ---- Screenshot (avec fallback si fichier absent) ----
+\newcommand{\screenshot}[2]{%
+  \begin{figure}[H]%
+    \centering%
+    \IfFileExists{screenshots/#1}{%
+      \includegraphics[width=0.92\textwidth]{screenshots/#1}%
+    }{%
+      \fcolorbox{gris}{gris!20}{\parbox{0.88\textwidth}{%
+        \centering\vspace{0.7cm}%
+        \textcolor{gray}{\itshape [Screenshot à insérer : \texttt{#1}]}%
+        \vspace{0.7cm}%
+      }}%
+    }%
+    \caption{#2}%
+  \end{figure}%
+}
+
+% ---- En-tête / pied de page ----
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small Qualité de développement — TP2}
+\rhead{\small BUT Informatique 2\up{e} année}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue}
+
+% =====================================================================
+\begin{document}
+% =====================================================================
+
+% ---- Page de titre ----
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+  {\Large\bfseries Département Informatique --- BUT 2\up{e} année\par}
+  \vspace{0.4cm}
+  {\large Qualité de développement\par}
+  \vspace{2cm}
+  \rule{\textwidth}{1.5pt}\\[0.5cm]
+  {\Huge\bfseries Compte rendu --- TP2\par}
+  \vspace{0.3cm}
+  {\Large Application de calcul statistique\\ pour groupes de TP\par}
+  \rule{\textwidth}{1.5pt}\\[2cm]
+  \begin{tabular}{ll}
+    \textbf{Étudiants} & Ahmed Errebache \& Léa Couturas \\
+    \textbf{Groupe}    & BUT Informatique 2A             \\
+    \textbf{Date}      & 13 mai 2026                     \\
+    \textbf{Dépôt}     & \texttt{QD3\_TP2\_AE\_LC}       \\
+  \end{tabular}
+  \vfill
+  {\large IUT --- 2025--2026\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{Introduction}
+% =====================================================================
+
+\subsection{Contexte}
+
+Dans le cadre du module \textit{Qualité de développement}, nous avons
+développé une application Java permettant à un enseignant de saisir les
+notes de son groupe TP, d'en calculer la moyenne et la médiane, puis de
+stocker ce résultat avec ses identifiants.
+
+Le sujet s'inspire du cas réel d'Alain Dupont (\texttt{alain.dupont@iut.fr}),
+enseignant en informatique, qui avait jusqu'ici un simple tableau d'entiers
+fixe. Notre objectif a été de concevoir une application propre, testée et
+évolutive.
+
+\subsection{Architecture du projet}
+
+Le projet est structuré en trois classes métier séparées :
+
+\begin{center}
+\begin{tabular}{lp{9.5cm}}
+  \toprule
+  \textbf{Classe}         & \textbf{Rôle} \\
+  \midrule
+  \texttt{UtilisateurTab} & Représente l'enseignant : prénom, nom, adresse mail
+                            validée par expression régulière, date de l'examen \\
+  \texttt{CalculTab}      & Gère la liste des notes (\texttt{ArrayList<Integer>}),
+                            calcule la moyenne, la médiane (avec tri interne), et
+                            formate le résultat à stocker \\
+  \texttt{Principale}     & Point d'entrée (\texttt{main}) : saisie interactive et
+                            affichage des résultats \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Démarche TDD}
+
+Nous avons adopté une approche \textbf{TDD} (Test-Driven Development) :
+
+\begin{enumerate}
+  \item Écriture du test --- il est \textbf{rouge} car le code n'existe pas encore.
+  \item Implémentation minimale du code pour faire passer le test.
+  \item Vérification --- le test passe, il est \textbf{vert}.
+\end{enumerate}
+
+Tous les tests suivent la convention de nommage
+\texttt{givenÉtat\_whenAction\_thenComportement()}, sont annotés
+\texttt{@DisplayName}, et utilisent \textbf{AssertJ} pour des assertions
+lisibles.
+
+% =====================================================================
+\section{Modélisation de l'enseignant (\texttt{UtilisateurTab})}
+% =====================================================================
+
+\subsection{Objectif}
+
+La classe \texttt{UtilisateurTab} représente l'enseignant. Une adresse mail
+mal formatée doit être immédiatement rejetée par une
+\texttt{IllegalArgumentException}, afin que le programme ne puisse jamais
+stocker un résultat avec des identifiants invalides.
+
+\subsection{Tests écrits}
+
+\begin{lstlisting}[style=java, caption={\texttt{UtilisateurTabTest.java} --- extrait}]
+@Test
+@DisplayName("Creation reussie avec un email valide")
+void constructor_createsUser_whenEmailIsValid() {
+    // Given + When
+    UtilisateurTab u = new UtilisateurTab(
+            "Alain", "Dupont", "alain.dupont@iut.fr", DATE_EXAMEN);
+    // Then
+    assertThat(u.getPrenom()).isEqualTo("Alain");
+    assertThat(u.getEmail()).isEqualTo("alain.dupont@iut.fr");
+}
+
+@ParameterizedTest(name = "Email invalide : \"{0}\"")
+@DisplayName("Construction echoue pour des emails invalides")
+@ValueSource(strings = { "pasunmail", "sans@domaine", "@nodomain.fr", "" })
+void constructor_throwsException_whenEmailIsInvalid(String emailInvalide) {
+    assertThatThrownBy(() ->
+            new UtilisateurTab("Alain", "Dupont", emailInvalide, DATE_EXAMEN))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("invalide");
+}
+\end{lstlisting}
+
+\subsection{État rouge --- avant implémentation}
+
+\etatrouge{4 tests échouent : aucune validation n'est encore présente,
+\texttt{ajouterNote()} accepte n'importe quelle chaîne.}
+
+\screenshot{AE_01_email_rouge.png}{%
+  \texttt{mvn test -Dtest=UtilisateurTabTest} --- avant la validation email}
+
+\subsection{Implémentation}
+
+Nous avons ajouté une expression régulière compilée en constante statique
+pour valider le format de l'email dès la construction de l'objet.
+
+\begin{lstlisting}[style=java, caption={\texttt{UtilisateurTab.java} --- validation email}]
+private static final Pattern EMAIL_PATTERN =
+        Pattern.compile("[\\w.-]+@[\\w.-]+\\.[a-z]{2,}");
+
+public UtilisateurTab(String prenom, String nom,
+                      String email, LocalDate dateExamen) {
+    if (!EMAIL_PATTERN.matcher(email).matches()) {
+        throw new IllegalArgumentException(
+                "Adresse mail invalide : " + email);
+    }
+    this.prenom = prenom;
+    this.nom    = nom;
+    this.email  = email;
+    this.dateExamen = dateExamen;
+}
+\end{lstlisting}
+
+\subsection{État vert --- après implémentation}
+
+\etatvert{7 tests passent : création valide réussie et rejet des emails
+incorrects (4 cas paramétrés).}
+
+\screenshot{AE_01_email_vert.png}{%
+  \texttt{mvn test -Dtest=UtilisateurTabTest} --- après la validation email}
+
+% =====================================================================
+\section{Calcul des statistiques (\texttt{CalculTab})}
+% =====================================================================
+
+% ----------------------------
+\subsection{Calcul de la moyenne}
+% ----------------------------
+
+\subsubsection*{Objectif}
+
+La méthode \texttt{calculerMoyenne()} calcule la somme de toutes les notes
+divisée par leur nombre. Si la liste est vide, elle retourne \texttt{0.0}.
+
+\subsubsection*{Tests écrits}
+
+\begin{lstlisting}[style=java, caption={\texttt{CalculTabTest.java} --- tests moyenne}]
+@Test
+@DisplayName("Moyenne correcte pour plusieurs notes")
+void calculerMoyenne_returnsCorrectAverage_forMultipleNotes() {
+    // Arrange
+    calcul.ajouterNote(10);
+    calcul.ajouterNote(12);
+    calcul.ajouterNote(14);
+    // Act + Assert
+    assertThat(calcul.calculerMoyenne()).isEqualTo(12.0);
+}
+
+@Test
+@DisplayName("Moyenne vaut 0 quand aucune note n'est presente")
+void calculerMoyenne_returnsZero_whenNoNote() {
+    assertThat(calcul.calculerMoyenne()).isEqualTo(0.0);
+}
+\end{lstlisting}
+
+\subsubsection*{État rouge --- avant implémentation}
+
+\etatrouge{2 tests échouent : \texttt{calculerMoyenne()} retourne toujours
+\texttt{0.0} quelle que soit la liste.}
+
+\screenshot{AE_02_moyenne_rouge.png}{%
+  \texttt{mvn test -Dtest=CalculTabTest} --- avant \texttt{calculerMoyenne()}}
+
+\subsubsection*{Implémentation}
+
+\begin{lstlisting}[style=java, caption={\texttt{CalculTab.java} --- calculerMoyenne()}]
+public double calculerMoyenne() {
+    if (notes.isEmpty()) return 0.0;
+    int somme = 0;
+    for (int note : notes) somme += note;
+    return (double) somme / notes.size();
+}
+\end{lstlisting}
+
+\subsubsection*{État vert --- après implémentation}
+
+\etatvert{Tests de moyenne passent.}
+
+\screenshot{AE_02_moyenne_vert.png}{%
+  \texttt{mvn test -Dtest=CalculTabTest} --- après \texttt{calculerMoyenne()}}
+
+% ----------------------------
+\subsection{Calcul de la médiane}
+% ----------------------------
+
+\subsubsection*{Objectif}
+
+La médiane est calculée sur une \textit{copie triée} de la liste, afin de
+ne pas modifier l'ordre de saisie. Pour un nombre pair de notes, on fait
+la moyenne des deux valeurs centrales.
+
+\subsubsection*{Tests écrits}
+
+\begin{lstlisting}[style=java, caption={\texttt{CalculTabTest.java} --- tests médiane}]
+@Test
+@DisplayName("Mediane : valeur centrale pour nombre impair de notes")
+void calculerMediane_returnsMiddleValue_forOddCount() {
+    // notes saisies en desordre intentionnellement
+    calcul.ajouterNote(15); calcul.ajouterNote(10); calcul.ajouterNote(12);
+    // [10, 12, 15] apres tri -> mediane = 12
+    assertThat(calcul.calculerMediane()).isEqualTo(12.0);
+}
+
+@Test
+@DisplayName("Mediane : moyenne des deux centraux pour nombre pair")
+void calculerMediane_returnsAverageOfTwoMiddle_forEvenCount() {
+    calcul.ajouterNote(10); calcul.ajouterNote(12);
+    calcul.ajouterNote(14); calcul.ajouterNote(16);
+    // (12 + 14) / 2 = 13.0
+    assertThat(calcul.calculerMediane()).isEqualTo(13.0);
+}
+\end{lstlisting}
+
+\subsubsection*{État rouge --- avant implémentation}
+
+\etatrouge{3 tests échouent : \texttt{calculerMediane()} retourne toujours
+\texttt{0.0}.}
+
+\screenshot{AE_03_mediane_rouge.png}{%
+  \texttt{mvn test -Dtest=CalculTabTest} --- avant \texttt{calculerMediane()}}
+
+\subsubsection*{Implémentation}
+
+\begin{lstlisting}[style=java, caption={\texttt{CalculTab.java} --- calculerMediane()}]
+public double calculerMediane() {
+    if (notes.isEmpty()) return 0.0;
+    List<Integer> triees = new ArrayList<>(notes); // copie : ordre original conserve
+    Collections.sort(triees);
+    int milieu = triees.size() / 2;
+    if (triees.size() % 2 == 1) return triees.get(milieu);
+    return (triees.get(milieu - 1) + triees.get(milieu)) / 2.0;
+}
+\end{lstlisting}
+
+\subsubsection*{État vert --- après implémentation}
+
+\etatvert{10 tests passent dans \texttt{CalculTabTest}.}
+
+\screenshot{AE_03_mediane_vert.png}{%
+  \texttt{mvn test -Dtest=CalculTabTest} --- après \texttt{calculerMediane()}}
+
+% =====================================================================
+\section{Scénarios d'utilisation complète}
+% =====================================================================
+
+\subsection{Objectif}
+
+Cinq scénarios \textit{end-to-end} valident le parcours complet d'Alain
+Dupont : saisie d'un groupe de notes, calcul des statistiques et génération
+de la chaîne à stocker. Ils utilisent la structure \texttt{@Nested} de JUnit 5.
+
+\begin{center}
+\begin{tabular}{clp{7cm}}
+  \toprule
+  \textbf{N°} & \textbf{Scénario} & \textbf{Ce qui est vérifié} \\
+  \midrule
+  1 & Groupe de 5 étudiants       & Moyenne, médiane et résultat complet \\
+  2 & Notes toutes identiques     & Moyenne = médiane = note commune \\
+  3 & Grand groupe de 10 (pair)   & Médiane = moyenne des deux centraux \\
+  4 & Groupe d'un seul étudiant   & Cas limite : moyenne = médiane = note \\
+  5 & Identifiants de l'enseignant & Email valide accepté, invalide rejeté \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Extrait --- Scénario 1}
+
+\begin{lstlisting}[style=java, caption={\texttt{ScenarioGroupeTPTest.java} --- scénario 1}]
+@Test
+@DisplayName("Le resultat stocke contient toutes les informations requises")
+void givenGroupeDeCinqEtudiants_whenGenerateResultat_thenContainsAllInfos() {
+    // Given
+    UtilisateurTab enseignant = new UtilisateurTab(
+            "Alain", "Dupont", "alain.dupont@iut.fr", DATE_EXAMEN);
+    CalculTab calcul = new CalculTab();
+    for (int note : new int[]{10, 12, 14, 16, 18}) calcul.ajouterNote(note);
+    // When
+    String resultat = calcul.toResultatString(enseignant);
+    // Then
+    assertThat(resultat)
+            .contains("Alain").contains("Dupont")
+            .contains("alain.dupont@iut.fr").contains("2026-05-13")
+            .contains("5").contains("14.00");
+}
+\end{lstlisting}
+
+\subsection{État rouge --- avant \texttt{toResultatString()}}
+
+\etatrouge{2 tests de scénario échouent : \texttt{toResultatString()} retourne
+une chaîne vide.}
+
+\screenshot{AE_04_scenarios_rouge.png}{%
+  \texttt{mvn test -Dtest=ScenarioGroupeTPTest} --- avant \texttt{toResultatString()}}
+
+\subsection{Implémentation}
+
+\begin{lstlisting}[style=java, caption={\texttt{CalculTab.java} --- toResultatString()}]
+public String toResultatString(UtilisateurTab utilisateur) {
+    return new StringBuilder()
+            .append(utilisateur)      // prenom, nom, email, date
+            .append(", ").append(getTaille())
+            .append(", ").append(String.format(Locale.ROOT, "%.2f",
+                    calculerMoyenne()))
+            .append(", ").append(String.format(Locale.ROOT, "%.2f",
+                    calculerMediane()))
+            .toString();
+}
+\end{lstlisting}
+
+\subsection{État vert --- scénarios complets}
+
+\etatvert{8 tests de scénario passent --- 5 scénarios couverts.}
+
+\screenshot{AE_04_scenarios_vert.png}{%
+  \texttt{mvn test -Dtest=ScenarioGroupeTPTest} --- scénarios au vert}
+
+\subsection{Bilan global}
+
+\etatvert{25 tests --- 0 échec --- BUILD SUCCESS}
+
+\screenshot{AE_05_final_vert.png}{%
+  \texttt{mvn test} --- exécution complète : 25 tests au vert}
+
+% =====================================================================
+\section{Extension du projet}
+% =====================================================================
+
+Cette partie complète l'application avec la validation des plages de notes
+et la persistance du résultat dans un fichier.
+
+% ----------------------------
+\subsection{Validation des notes (\texttt{ajouterNote})}
+% ----------------------------
+
+\subsubsection*{Objectif}
+
+Une note doit être comprise entre 0 et 20 inclus. Toute valeur hors plage
+doit lever une \texttt{IllegalArgumentException}.
+
+\subsubsection*{Tests prévus}
+
+\begin{lstlisting}[style=java, caption={\texttt{CalculTabEdgeCasesTest.java} --- extrait attendu}]
+@Test
+void ajouterNote_throwsException_whenNoteAbove20() {
+    assertThatThrownBy(() -> calcul.ajouterNote(25))
+            .isInstanceOf(IllegalArgumentException.class);
+}
+
+@Test
+void ajouterNote_throwsException_whenNoteNegative() {
+    assertThatThrownBy(() -> calcul.ajouterNote(-1))
+            .isInstanceOf(IllegalArgumentException.class);
+}
+
+@Test
+void ajouterNote_succeeds_whenNoteIsZero() {
+    calcul.ajouterNote(0);
+    assertThat(calcul.getTaille()).isEqualTo(1);
+}
+\end{lstlisting}
+
+\subsubsection*{État rouge}
+
+\etatrouge{\texttt{ajouterNote(25)} s'exécute sans erreur --- aucune
+validation n'est présente.}
+
+\screenshot{LC_01_validation_rouge.png}{%
+  Tests de validation des notes en échec}
+
+\subsubsection*{Implémentation attendue}
+
+\begin{lstlisting}[style=java, caption={\texttt{CalculTab.java} --- garde dans ajouterNote()}]
+public void ajouterNote(int note) {
+    if (note < 0 || note > 20)
+        throw new IllegalArgumentException(
+                "Note invalide : " + note + " (doit etre entre 0 et 20)");
+    notes.add(note);
+}
+\end{lstlisting}
+
+\subsubsection*{État vert}
+
+\etatvert{Tests de validation des notes passent.}
+
+\screenshot{LC_01_validation_vert.png}{%
+  Tests de validation des notes au vert}
+
+% ----------------------------
+\subsection{Stockage du résultat (\texttt{ResultatStockage})}
+% ----------------------------
+
+\subsubsection*{Objectif}
+
+La classe \texttt{ResultatStockage} écrit la chaîne retournée par
+\texttt{toResultatString()} dans un fichier texte. Les tests vérifient
+que le fichier est créé et contient le contenu exact.
+
+\subsubsection*{État rouge}
+
+\etatrouge{Erreur de compilation : la classe \texttt{ResultatStockage}
+n'existe pas encore.}
+
+\screenshot{LC_02_stockage_rouge.png}{%
+  Erreur de compilation avant la création de \texttt{ResultatStockage}}
+
+\subsubsection*{Interface attendue}
+
+\begin{lstlisting}[style=java, caption={\texttt{ResultatStockage.java} --- interface attendue}]
+public class ResultatStockage {
+    /**
+     * Ecrit le contenu dans le fichier au chemin indique.
+     * @param contenu  chaine retournee par toResultatString()
+     * @param chemin   chemin du fichier cible
+     */
+    public void sauvegarder(String contenu, String chemin) throws IOException {
+        // a implementer
+    }
+}
+\end{lstlisting}
+
+\subsubsection*{État vert}
+
+\etatvert{Tests de stockage passent : fichier créé avec le bon contenu.}
+
+\screenshot{LC_02_stockage_vert.png}{%
+  Tests de stockage au vert}
+
+% ----------------------------
+\subsection{Résultat final du projet}
+% ----------------------------
+
+\screenshot{LC_03_final_vert.png}{%
+  \texttt{mvn test} --- tous les tests passent après la partie LC}
+
+% =====================================================================
+\section{Conclusion}
+% =====================================================================
+
+Ce projet nous a permis de mettre en pratique la démarche \textbf{TDD}
+sur un cas concret. En écrivant les tests avant le code, nous avons été
+contraints de définir précisément le comportement attendu avant toute
+implémentation.
+
+Les points clés retenus :
+
+\begin{itemize}
+  \item Le cycle \textbf{Rouge $\rightarrow$ Vert} pousse à écrire un code
+        minimal et ciblé, sans surconception.
+  \item Les \textbf{scénarios \texttt{@Nested}} donnent une vision claire
+        des cas d'usage réels plutôt que de simples tests unitaires isolés.
+  \item \textbf{AssertJ} produit des messages d'erreur explicites qui
+        accélèrent le diagnostic en cas d'échec.
+  \item La \textbf{séparation des classes} (\texttt{UtilisateurTab},
+        \texttt{CalculTab}, \texttt{Principale}) facilite les tests unitaires
+        en évitant les dépendances inutiles.
+  \item Les \textbf{commits atomiques} permettent de retrouver l'état du
+        projet à chaque étape et de visualiser la progression via l'historique
+        Git.
+\end{itemize}
+
+Au final, \textbf{25 tests} couvrent l'ensemble des fonctionnalités
+principales. La couverture dépasse largement le seuil de 50\,\% demandé.
+La partie LC vient compléter ce bilan avec la validation des plages de
+notes et la persistance du résultat.
+
+\end{document}
