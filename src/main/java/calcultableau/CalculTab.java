@@ -12,6 +12,8 @@ public class CalculTab {
 
     private final List<Integer> notes = new ArrayList<>();
 
+    public CalculTab() {}
+
     public CalculTab(ArrayList<Integer> notes) {
         this.notes.addAll(notes);
     }
