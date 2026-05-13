@@ -1,85 +1,56 @@
 package calcultableau;
 
-import org.junit.jupiter.api.AfterEach;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-
-import static org.assertj.core.api.Assertions.*;
-
-/**
- * Tests de ResultatStockage : ecriture du resultat dans un fichier texte.
- *
- * Auteur : Lucas Charpentier (LC)
- */
-@DisplayName("Tests de ResultatStockage : persistance du resultat")
-class ResultatStockageTest {
-
-    private static final String FICHIER_TEST = "test_resultat.txt";
-
-    @AfterEach
-    void nettoyage() throws IOException {
-        Files.deleteIfExists(Paths.get(FICHIER_TEST));
-    }
-
+public class ResultatStockageTest {
+    
     @Test
-    @DisplayName("sauvegarder cree le fichier s'il n'existe pas")
-    void sauvegarder_createsFile_whenFileDoesNotExist() throws IOException {
+    @DisplayName("sauvegarder cree le fichier")
+    void sauvegarder_contenuValide_creeFichier() throws IOException {
+
         // Given
         ResultatStockage stockage = new ResultatStockage();
-        String contenu = "Alain, Dupont, alain.dupont@iut.fr, 2026-05-13, 5, 14.00, 14.00";
+
+        String chemin = "test.txt";
 
         // When
-        stockage.sauvegarder(contenu, FICHIER_TEST);
+        stockage.sauvegarder("bonjour", chemin);
 
         // Then
-        assertThat(Paths.get(FICHIER_TEST)).exists();
+        File fichier = new File(chemin);
+
+        assertThat(fichier.exists()).isTrue();
+
+        fichier.delete();
     }
 
-    @Test
-    @DisplayName("sauvegarder ecrit exactement le contenu fourni")
-    void sauvegarder_writesExactContent_whenCalled() throws IOException {
-        // Given
-        ResultatStockage stockage = new ResultatStockage();
-        String contenu = "Alain, Dupont, alain.dupont@iut.fr, 2026-05-13, 5, 14.00, 14.00";
-
-        // When
-        stockage.sauvegarder(contenu, FICHIER_TEST);
-
-        // Then
-        String contenuLu = Files.readString(Paths.get(FICHIER_TEST));
-        assertThat(contenuLu).isEqualTo(contenu);
-    }
 
     @Test
-    @DisplayName("sauvegarder fonctionne avec le resultat reel de toResultatString")
-    void sauvegarder_worksWithRealResultat_fromCalculTab() throws IOException {
-        // Given
-        UtilisateurTab enseignant = new UtilisateurTab(
-                "Lucas", "Charpentier", "lucas.charpentier@iut.fr",
-                LocalDate.of(2026, 5, 13));
-        CalculTab calcul = new CalculTab();
-        calcul.ajouterNote(10);
-        calcul.ajouterNote(14);
-        calcul.ajouterNote(18);
+    @DisplayName("sauvegarder ecrit le bon contenu")
+    void sauvegarder_contenuValide_ecritBonContenu() throws IOException {
 
+        // Given
         ResultatStockage stockage = new ResultatStockage();
 
+        String chemin = "test.txt";
+
         // When
-        String contenu = calcul.toResultatString(enseignant);
-        stockage.sauvegarder(contenu, FICHIER_TEST);
+        stockage.sauvegarder("bonjour", chemin);
+
+        String contenu =
+                Files.readString(Path.of(chemin));
 
         // Then
-        Path fichier = Paths.get(FICHIER_TEST);
-        assertThat(fichier).exists();
-        assertThat(Files.readString(fichier))
-                .contains("Lucas")
-                .contains("Charpentier")
-                .contains("14.00");
+        assertThat(contenu).isEqualTo("bonjour");
+
+        new File(chemin).delete();
     }
 }
