@@ -3,6 +3,7 @@ package calcultableau;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Gere une liste de notes et calcule moyenne et mediane.
@@ -76,9 +77,9 @@ public class CalculTab {
                 .append(", ")
                 .append(getTaille())
                 .append(", ")
-                .append(String.format("%.2f", calculerMoyenne()))
+                .append(String.format(Locale.ROOT, "%.2f", calculerMoyenne()))
                 .append(", ")
-                .append(String.format("%.2f", calculerMediane()))
+                .append(String.format(Locale.ROOT, "%.2f", calculerMediane()))
                 .toString();
     }
 
@@ -87,8 +88,8 @@ public class CalculTab {
         return new StringBuilder()
                 .append("Notes : ").append(notes)
                 .append(" | Taille : ").append(getTaille())
-                .append(" | Moyenne : ").append(String.format("%.2f", calculerMoyenne()))
-                .append(" | Mediane : ").append(String.format("%.2f", calculerMediane()))
+                .append(" | Moyenne : ").append(String.format(Locale.ROOT, "%.2f", calculerMoyenne()))
+                .append(" | Mediane : ").append(String.format(Locale.ROOT, "%.2f", calculerMediane()))
                 .toString();
     }
 }
